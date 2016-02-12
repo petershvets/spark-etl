@@ -23,3 +23,6 @@ spark-etl
   
 
 #Environment and Application Configuration
+
+
+# Troubleshooting
