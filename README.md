@@ -1,7 +1,9 @@
 # spark-etl
 SPARK-ETL is Data Integration tool built on Spark and Simple-Salesforce.
-Spark - http://spark.apache.org/downloads.html. Version 1.5.2 was used for current implementation.
-Simple-Salesforce - https://github.com/heroku/simple-salesforce
+
+	Spark - http://spark.apache.org/downloads.html. Version 1.5.2 was used for current implementation.
+
+	Simple-Salesforce - https://github.com/heroku/simple-salesforce
 
 #Dependencies:
 Python3
