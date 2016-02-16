@@ -22,7 +22,8 @@ spark-etl
 	scripts
   
 
-#Environment and Application Configuration
+#Installation/Configuration
+###Environment and Application Configuration
 
 
 # Troubleshooting
