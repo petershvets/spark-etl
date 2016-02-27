@@ -11,7 +11,12 @@ Python3
 Simple-Salesforce
 
 #Functionality
-SPARK-ETL application connects to Salesforce org, extracts data from defined tables and loads it into DataFrames in Spark context.
+SPARK-ETL application performs the following operations:
+
+Connects to Salesforce org
+Extracts data from tables defined in property files
+Loads each respective table data into Spark DataFrame
+Creates Spark SQL table for further operations
 
 #Structure:
 There is top level folder called 'spark-etl' and four subfolders: 'connections', 'etl-config', 'logs' and 'scripts'
