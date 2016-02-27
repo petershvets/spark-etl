@@ -41,3 +41,7 @@ Environment Variables
 
 
 # Troubleshooting
+
+# Future functionality
+	Incremental extraction
+	Load data into relational database (PostgreSQL, MySQL)
