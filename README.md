@@ -35,5 +35,6 @@ Environment Variables
 # Troubleshooting
 
 # Future functionality
+	SFDC Namespace as a parameter
 	Incremental extraction
 	Load data into relational database (PostgreSQL, MySQL)
