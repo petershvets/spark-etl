@@ -13,7 +13,7 @@ spark_etl_logger = set_up_logging()
 # Initiate Spark app, Spark Context and HiveContext
 APP_NAME = "Spark-ETL"
 conf = SparkConf().setAppName(APP_NAME)
-conf = SparkConf().setAppName(APP_NAME).set("spark.cores.max", "4").setMaster("spark://pdpshvets.modeln.com:7077")
+conf = SparkConf().setAppName(APP_NAME).set("spark.cores.max", "4").setMaster("local")
 sc = SparkContext(conf=conf)
 #HiveContect is a superset of SQLContext, so creating HiveContext
 # Can switch to sqlContext = SQLContext(sc)
