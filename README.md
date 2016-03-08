@@ -37,5 +37,6 @@ Environment Variables
 
 # Future functionality
 	SFDC Namespace as a parameter
-	Incremental extraction
+	Serialize data into HiveMetastore tables
+	Store data in csv files on AWS S3
 	Load data into relational database (PostgreSQL, MySQL)
