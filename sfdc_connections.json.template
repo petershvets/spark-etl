@@ -1,0 +1,12 @@
+{
+  "cust_org1":{
+  				"username":"sfdc user name",
+  				"password":"sfdc user password",
+  				"security_token":"sfdc security token"
+  			  },
+  "cust-org2":{
+  				"username":"",
+  				"password":"",
+  				"security_token":""
+  				}
+}
