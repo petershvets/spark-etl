@@ -142,7 +142,7 @@ def main(sc, sqlContext, properties_file, spark_etl_logger):
 	sqlDataFrame = v_rdd.map(lambda l: Row(**dict(l))).toDF()
 	spark_etl_logger.info("Generating PK")
 	sqlDFPK = sqlDataFrame.withColumn('WID', monotonicallyIncreasingId()+1)
-	print("Done generating PK")	
+	spark_etl_logger.info("Done generating PK")	
 	spark_etl_logger.info("Created dataframe with extracted data:: ")
 	sqlDFPK.printSchema()
 	sqlDFPK.show()
@@ -161,9 +161,7 @@ def main(sc, sqlContext, properties_file, spark_etl_logger):
 	for k,v in sorted(dict_tbl_properties["columns_map"].items()):
 		spark_etl_logger.info("Column mapping: "+k+":"+v)
 
-	# Construct command for column renaming
-#	dfColumnsOrig = "sqlDataFrame"
-#	dfColumnsRenamed = "dfRemapped"
+	# Construct command for column mapping
 	wCol ='' 
 	v_dfSQL_col = ''
 	for k,v in sorted(dict_tbl_properties["columns_map"].items()):
