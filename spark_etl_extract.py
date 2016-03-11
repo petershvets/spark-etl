@@ -117,11 +117,13 @@ def main(sc, sqlContext, properties_file, spark_etl_logger):
 	for record in columnProperties:
 		spark_etl_logger.info("Column MySQL datatype: " + record["name"]+" Type:"+record["type"]+" New: "+util.get_sfdc_mysql_dt(record["type"], str(record["length"]), str(record["precision"]), str(record["scale"])))
 
-	############################ Start Data Acquisition ###########################
+	#*********************** Start Data Acquisition **************************#
 	#
-	# Extract data from SFDC - run SOQL statement. sf.query returns a list of OrderedDict
+	# Extract data from SFDC - run SOQL statement.
+	# sf.query returns a list of OrderedDict
 	queryResultRaw = sf.query_all(soqlStmt)
-
+	#*********************** End Data Acquisition ****************************#
+	
 	#********************* Clean up dataset *************************#
 	# Remove unrelated record metadata provided by SFDC
 	queryResult = list()
@@ -132,14 +134,18 @@ def main(sc, sqlContext, properties_file, spark_etl_logger):
 	# Create RDD
 	v_rdd = sc.parallelize(queryResult)
 	rddElemCount = v_rdd.count()
+	spark_etl_logger.info("RDD was successfully created")
 	spark_etl_logger.info("Dataset contains:  "+ str(rddElemCount) + " records")
 
 	# Create DataFrame from RDD
-	global sqlDataFrame
+	global sqlDataFrame, sqlDFPK
 	sqlDataFrame = v_rdd.map(lambda l: Row(**dict(l))).toDF()
-	spark_etl_logger.info("Created data frame with extracted data:: ")
-	sqlDataFrame.printSchema()
-	sqlDataFrame.show()
+	spark_etl_logger.info("Generating PK")
+	sqlDFPK = sqlDataFrame.withColumn('WID', monotonicallyIncreasingId()+1)
+	print("Done generating PK")	
+	spark_etl_logger.info("Created dataframe with extracted data:: ")
+	sqlDFPK.printSchema()
+	sqlDFPK.show()
 
 	####################### UDF functions #########################
 	# Create UDFs
@@ -156,8 +162,8 @@ def main(sc, sqlContext, properties_file, spark_etl_logger):
 		spark_etl_logger.info("Column mapping: "+k+":"+v)
 
 	# Construct command for column renaming
-	dfColumnsOrig = "sqlDataFrame"
-	dfColumnsRenamed = "dfRemapped"
+#	dfColumnsOrig = "sqlDataFrame"
+#	dfColumnsRenamed = "dfRemapped"
 	wCol ='' 
 	v_dfSQL_col = ''
 	for k,v in sorted(dict_tbl_properties["columns_map"].items()):
@@ -166,18 +172,33 @@ def main(sc, sqlContext, properties_file, spark_etl_logger):
 		v_dfSQL_col = v_dfSQL_col + "\""+v+"\","
 
 	dfSQL_col = v_dfSQL_col.rstrip(',')
-	spark_etl_logger.info("The following command will be executed: dfRemapped = sqlDataFrame %s" %(wCol))
+	spark_etl_logger.info("The following command will be executed: dfRemapped = sqlDFPK %s" %(wCol))
 #	exec(dfColumnsRenamed+" = "+dfColumnsOrig+wCol, globals())
-	exec("global dfRemapped; dfRemapped = sqlDataFrame"+wCol, globals())
+	exec("global dfRemapped; dfRemapped = sqlDFPK"+wCol, globals())
 	dfRemapped.printSchema() 
 	dfRemapped.show() 
 	######################## End mapping columns ########################
 
+	# Generate PK
+	# Sample
+	#df0 = sc.parallelize(range(2), 2).mapPartitions(lambda x: [(1,), (2,), (3,)]).toDF(['col1'])
+	#df0.select(monotonicallyIncreasingId().alias('id')).collect()
+	
 	#################### Register DataFrame as Temp Table for SQL operatoins ####################
 	spark_etl_logger.info("Registering remapped data frame as Spark SQL temp table")
 	dfRemapped.registerTempTable(tgt_table_name)
 	# Run SQL (returns RDD)
-#	product = sqlContext.sql("SELECT * FROM "+ tgt_table_name)
+	rddSQL = sqlContext.sql("SELECT * FROM "+ tgt_table_name)
+
+	# Write DataFrame into AWS S3 bucket
+	print("Serialize DF into S3")
+#	dfRemapped.repartition(1).write.save("s3n://hive-qs-data/"+tgt_table_name+".json", "json", )
+#	dfRemapped.write.mode('append').json("s3n://hive-qs-data/"+tgt_table_name)
+#	rddSQL.rdd.saveAsTextFile(tgt_table_name+".csv")
+#	dfRemapped.rdd.map(lambda rec: ",".join([str(col) for col in rec])).saveAsTextFile("s3n://hive-qs-data/"+tgt_table_name)
+#	dfRemapped.repartition(1).rdd.map(lambda rec: ",".join([str(col) for col in rec])).saveAsTextFile("s3n://hive-qs-data/"+tgt_table_name)	
+	print("Done serialize DF into S3")
+	
 	endTime = datetime.now()
 	spark_etl_logger.info("***** Main process execution completed at: " + str(endTime))
 	spark_etl_logger.info("***** Main process execution took: " + str(endTime - startTime))	
