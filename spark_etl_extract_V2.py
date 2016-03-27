@@ -79,34 +79,6 @@ def main(sc, sqlContext, properties_file, spark_etl_logger):
 			# Define target table name for load into target data storage of your choice
 			tgt_table_name = dict_tbl_properties["tgt_table"]
 			spark_etl_logger.info("Target table name: ",tgt_table_name)
-		
-		#******* Establish connection to SFDC and process table properties *******#
-		# Get Salesforce connection details from connections json file
-		spark_etl_logger.info("Processing SFDC connections information file sfdc_connections.json")
-		d_sfdc_conn = util.get_json_config(d_app_variables['SPARK_ETL_CONN_DIR'], "sfdc_connections.json")
-		spark_etl_logger.info("SFDC Connections: %s" %(list(d_sfdc_conn.keys())))
-
-		# Process SFDC Connection details
-		spark_etl_logger.info("SFDC Connection details: %s" %(d_sfdc_conn[dict_tbl_properties["sfdc_connection"]]))
-		# Establish connection to Salesforce. Using Simple-Salesforce package
-		exec("sf=" + util.get_sfdc_conn(**d_sfdc_conn[dict_tbl_properties["sfdc_connection"]]), globals())
-
-		#****** Retrieve source table properties to define target table DDL ******#
-		# Store object description in list of dictionaries
-		# This structure returned by Simple-Salesforce
-		exec("tblDesc = sf."+src_tbl_name+".describe()", globals())
-
-		lColProperties = ['name', 'type', 'length', 'precision', 'custom', 'scale']
-		columnProperties = list()
-
-		for line in tblDesc['fields']: # Iterate through the list of dictionaries
-			# Keep only needed properties listed in lColProperties list and 
-			# columns mapped in config properties file and remove the rest
-			rec = {k:line[k] for k in (lColProperties) if line["name"] in list(dict_tbl_properties["columns_map"].keys())}
-			if len(rec) == 0:continue
-			columnProperties.append(rec)
-			spark_etl_logger.info("Column properties: %s" %(rec))
-
 	elif dict_tbl_properties['data_source_type'] == 'flatfile':
 		# Process file header and define schema for creating RDD
 		schemaList = dict_tbl_properties["header"]
@@ -118,6 +90,34 @@ def main(sc, sqlContext, properties_file, spark_etl_logger):
 		exit()
 	#***** Done processing table properties defined in table ETL config file *****#
 
+	#******* Establish connection to SFDC and process table properties *******#
+	# Get Salesforce connection details from connections json file
+	spark_etl_logger.info("Processing SFDC connections information file sfdc_connections.json")
+	d_sfdc_conn = util.get_json_config(d_app_variables['SPARK_ETL_CONN_DIR'], "sfdc_connections.json")
+	spark_etl_logger.info("SFDC Connections: %s" %(list(d_sfdc_conn.keys())))
+
+	# Process SFDC Connection details
+	spark_etl_logger.info("SFDC Connection details: %s" %(d_sfdc_conn[dict_tbl_properties["sfdc_connection"]]))
+
+	# Establish connection to Salesforce. Using Simple-Salesforce package
+	exec("sf=" + util.get_sfdc_conn(**d_sfdc_conn[dict_tbl_properties["sfdc_connection"]]), globals())
+
+	###### Retrieve source table properties - use it to define target table DDL ####
+	#
+	# Store object description in list of dictionaries
+	# This structure returned by Simple-Salesforce
+	exec("tblDesc = sf."+src_tbl_name+".describe()", globals())
+
+	lColProperties = ['name', 'type', 'length', 'precision', 'custom', 'scale']
+	columnProperties = list()
+
+	for line in tblDesc['fields']: # Iterate through the list of dictionaries
+		# Keep only needed properties listed in lColProperties list and 
+		# columns mapped in config properties file and remove the rest
+		rec = {k:line[k] for k in (lColProperties) if line["name"] in list(dict_tbl_properties["columns_map"].keys())}
+		if len(rec) == 0:continue
+		columnProperties.append(rec)
+		spark_etl_logger.info("Column properties: %s" %(rec))
 
 	# Record target table properties in json file
 	with open(os.path.join(d_app_variables['SPARK_ETL_LOG_DIR'],tgt_table_name+"_schema.json"), "w") as tableMetadata_file:
@@ -135,8 +135,7 @@ def main(sc, sqlContext, properties_file, spark_etl_logger):
 	#*********************** End Data Acquisition ****************************#
 	
 	#************************** Clean up dataset *****************************#
-	# Remove unrelated record metadata provided by SFDC and convert 
-	# structure to list of tuples (key, value)
+	# Remove unrelated record metadata provided by SFDC
 	queryResult = list()
 	for line in queryResultRaw['records']:
 		rec=[(k,str(v)) for k, v in line.items() if k not in "attributes"]
@@ -152,9 +151,7 @@ def main(sc, sqlContext, properties_file, spark_etl_logger):
 	global sqlDataFrame, sqlDFPK
 	sqlDataFrame = v_rdd.map(lambda l: Row(**dict(l))).toDF()
 	spark_etl_logger.info("Generating PK")
-	# Call UDF to generate Primary Key
 	sqlDFPK = sqlDataFrame.withColumn('WID', monotonicallyIncreasingId()+1)
-	
 	spark_etl_logger.info("Done generating PK")	
 	spark_etl_logger.info("Created dataframe with extracted data:: ")
 	sqlDFPK.printSchema()
