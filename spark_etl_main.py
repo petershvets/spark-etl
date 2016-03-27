@@ -27,7 +27,7 @@ mysql_jdbc_prop = "jdbc:mysql://"
 mysql_host_prop = "mysql.rds.amazonaws.com/"
 meta_db_prop = "SPARK_DB"
 meta_table = "(SELECT * from sp_etl_app_data WHERE CLIENT_ID = 'Cust_ID') ta"
-#v_properties = {"user":"spark_dm", "password":"spark_dm"} 
+#v_properties = {"user":"spark", "password":"spark"} 
 db_user = 'spark'
 db_user_passwd = 'spark'
 v_url = mysql_jdbc_prop + mysql_host_prop + meta_db_prop
