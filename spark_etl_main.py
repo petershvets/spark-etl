@@ -24,12 +24,12 @@ sqlContext = HiveContext(sc)
 # Access app metadata repository and read execution metadata
 mysql_driver = 'com.mysql.jdbc.Driver'
 mysql_jdbc_prop = "jdbc:mysql://"
-mysql_host_prop = "mysqlrevvyanalytics01.cbjfkl3dhwj2.us-west-1.rds.amazonaws.com/"
+mysql_host_prop = "mysql.rds.amazonaws.com/"
 meta_db_prop = "SPARK_DB"
-meta_table = "(SELECT * from sp_etl_app_data WHERE CLIENT_ID = 'Ranbaxy') ta"
+meta_table = "(SELECT * from sp_etl_app_data WHERE CLIENT_ID = 'Cust_ID') ta"
 #v_properties = {"user":"spark_dm", "password":"spark_dm"} 
-db_user = 'spark_dm'
-db_user_passwd = 'spark_dm'
+db_user = 'spark'
+db_user_passwd = 'spark'
 v_url = mysql_jdbc_prop + mysql_host_prop + meta_db_prop
 
 #.option("url", "jdbc:mysql://mysqlrevvyanalytics01.cbjfkl3dhwj2.us-west-1.rds.amazonaws.com/SPARK_DB")
