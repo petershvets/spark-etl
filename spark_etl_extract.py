@@ -7,7 +7,6 @@ except ImportError:
     from ordereddict import OrderedDict
 from pyspark import Row
 from pyspark.sql.types import *
-from pyspark.sql import functions
 from pyspark.sql.functions import *
 from optparse import OptionParser
 from pyspark.sql import DataFrameWriter
@@ -18,6 +17,7 @@ from datetime import datetime
 
 # *** SPARK-ETL packages
 import util
+import udf_spark_etl
 
 def main(sc, sqlContext, properties_file, spark_etl_logger):
 	""" This is main data extraction functionality
@@ -140,8 +140,10 @@ def main(sc, sqlContext, properties_file, spark_etl_logger):
 	# Create DataFrame from RDD
 	global sqlDataFrame, sqlDFPK
 	sqlDataFrame = v_rdd.map(lambda l: Row(**dict(l))).toDF()
+	
 	spark_etl_logger.info("Generating PK")
-	sqlDFPK = sqlDataFrame.withColumn('WID', monotonicallyIncreasingId()+1)
+	sqlDFPK = udf_spark_etl.generate_pk('WID', sqlDataFrame)
+	#sqlDFPK = sqlDataFrame.withColumn('WID', monotonicallyIncreasingId()+1)
 	spark_etl_logger.info("Done generating PK")	
 	spark_etl_logger.info("Created dataframe with extracted data:: ")
 	sqlDFPK.printSchema()
