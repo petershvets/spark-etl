@@ -13,7 +13,7 @@ spark_etl_logger = set_up_logging()
 # Initiate Spark app, Spark Context and HiveContext
 APP_NAME = "Spark-ETL"
 conf = SparkConf().setAppName(APP_NAME)
-conf = SparkConf().setAppName(APP_NAME).setMaster("spark://pdpshvets.modeln.com:7077")
+conf = SparkConf().setAppName(APP_NAME).setMaster("spark://<host name>:7077")
 sc = SparkContext(conf=conf)
 sqlContext = HiveContext(sc)
 
